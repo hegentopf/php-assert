@@ -1,5 +1,5 @@
 {
-  "name": "hegentopf/assert",
+  "name": "hegentopf/php-assert",
   "description": "A simple assertion library for PHP",
   "type": "library",
   "license": "MIT",
@@ -26,7 +26,7 @@
     }
   },
   "scripts": {
-    "test": "phpunit --coverage-text --colors=always"
+    "test": "phpunit tests --colors=always"
   },
   "config": {
     "platform": {
