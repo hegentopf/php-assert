@@ -2,21 +2,55 @@
 
 namespace Hegentopf\Assert;
 
+use BadMethodCallException;
+
 /**
  * @method Assert isInt()
  * @method Assert isStrictInt()
  * @method Assert isFloat()
  * @method Assert isStrictFloat()
  * @method Assert isNumeric()
- * @method Assert isGreaterThan( $greaterThen )
+ * @method Assert isGreaterThan( $min )
+ * @method Assert isGreaterThanOrEqual( $min )
+ * @method Assert isLessThan( $max )
+ * @method Assert isLessThanOrEqual( $max )
+ * @method Assert isBetween( $min, $max, $inclusive = true )
+ * @method Assert isBool()
+ * @method Assert isStrictBool()
+ * @method Assert isJson()
+ * @method Assert isBase64()
+ * @method Assert isObject()
+ * @method Assert isArray()
+ * @method Assert IsNotInArray( array $haystack, $strict = false )
+ * @method Assert IsInArray( array $haystack, $strict = false )
+ * @method Assert isCallable()
+ * @method Assert isNull()
+ * @method Assert isEqualTo( $comparison )
+ * @method Assert isNotEqualTo( $comparison )
+ * @method Assert isSameAs( $comparison )
+ * @method Assert isNotSameAs( $comparison )
+ * @method Assert isString()
+ * @method Assert hasLength()
+ * @method Assert hasMinLength( $minLength )
+ * @method Assert hasMaxLength( $maxLength )
+ * @method Assert hasLengthBetween( $minLength, $maxLength )
+ * @method Assert matchesRegex( $pattern )
+ * @method Assert startsWith( $prefix, $caseSensitive = false )
+ * @method Assert endsWith( $suffix, $caseSensitive = false )
+ * @method Assert contains( $needle, $caseSensitive = false )
+ * @method Assert isEmail()
+ * @method Assert isDate()
+ * @method Assert isDateGreaterThan( $date )
+ * @method Assert isDateGreaterThanOrEqual( $date )
+ * @method Assert isDateLessThan( $date )
+ * @method Assert isDateLessThanOrEqual( $date )
+ * @method Assert isDateBetween( $minDate, $maxDate, $inclusive = true )
  */
 class Assert {
 
     protected $value;
     protected $name;
     protected $optional = false;
-    protected $keyExists = true;
-
     protected $results = array();
 
     public function __construct( $value, $name )
@@ -48,7 +82,6 @@ class Assert {
     public static function thatKey( $container, $key )
     {
 
-        $keyExists = false;
         $value = null;
 
         if ( is_array( $container ) )
@@ -78,10 +111,7 @@ class Assert {
             throw new AssertException( "Can only assert keys in array or object. Got: " . gettype( $container ) );
         }
 
-        $assert = new self( $value, $key );
-        $assert->setKeyExists( $keyExists );
-
-        return $assert;
+        return new self( $value, $key );
     }
 
     /**
@@ -95,7 +125,7 @@ class Assert {
         $className = __NAMESPACE__ . '\\assertions\\' . ucfirst( $name ) . 'Assertion';
         if ( !class_exists( $className ) )
         {
-            throw new \BadMethodCallException( "Method $name does not exist" );
+            throw new BadMethodCallException( "Method $name does not exist" );
         }
 
         $assertion = new $className( $this, ...$arguments );
@@ -120,23 +150,6 @@ class Assert {
     {
 
         return $this->name;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getKeyExists()
-    {
-
-        return $this->keyExists;
-    }
-
-    public function setKeyExists( $exists )
-    {
-
-        $this->keyExists = $exists;
-
-        return $this;
     }
 
     /**
@@ -174,28 +187,12 @@ class Assert {
 
     // Mark the value as required, throw if key missing
 
-    public function optional()
+    public function isOptional()
     {
 
         $this->optional = true;
 
         return $this;
     }
-
-
-    // For internal use, indicate if key exists or not
-
-    public function required()
-    {
-
-        $this->optional = false;
-        if ( false === $this->keyExists )
-        {
-            throw new AssertException( "Value for '{$this->name}' must be present." );
-        }
-
-        return $this;
-    }
-
 
 }

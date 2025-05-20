@@ -32,7 +32,7 @@ abstract class AbstractAssertion implements AssertionInterface {
     }
 
     /**
-     * @param Assert $context
+     * @param Assert $assert
      */
     public function __construct( Assert $assert )
     {
@@ -57,7 +57,7 @@ abstract class AbstractAssertion implements AssertionInterface {
 
         $this->assert->addResult( get_class( $this ), $this->passed );
 
-        if ( false === $this->passed )
+        if ( false == $this->passed )
         {
             throw new AssertException( $this->failureMessage );
         }
@@ -72,28 +72,10 @@ abstract class AbstractAssertion implements AssertionInterface {
         $this->failureMessage = $message;
     }
 
-    /**
-     * @return true
-     */
-    public function isPassed()
+    protected function getValueFormatted( $optionalVal = null )
     {
 
-        return $this->passed;
-    }
-
-    /**
-     * @param true $passed
-     */
-    public function setPassed( $passed )
-    {
-
-        $this->passed = $passed;
-    }
-
-    protected function getValueFormatted()
-    {
-
-        $value = $this->getValue();
+        $value = $optionalVal !== null ? $optionalVal : $this->getValue();
 
         if ( is_object( $value ) )
         {

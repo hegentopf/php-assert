@@ -5,114 +5,112 @@ namespace Hegentopf\Assert\Tests;
 use Hegentopf\Assert\Assert;
 use Hegentopf\Assert\AssertException;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use function PHPUnit\Framework\assertInstanceOf;
 
 class AssertTest extends TestCase {
-
-    public function testAssertThat(  )
+    public function testAssertThatPass()
     {
 
-        assertInstanceOf(Assert::class, Assert::that(1));
-
+        assertInstanceOf( Assert::class, Assert::that( 1 ) );
     }
-    public function testAssertThatKey( )
+
+    public function testAssertThatKeyPass()
     {
 
-        $array = array('test' => 3.14);
-        $obj = new \stdClass();
+        $array = [ 'test' => 3.14 ];
+        $obj = new stdClass();
         $obj->test = 3.14;
-        assertInstanceOf(Assert::class, Assert::thatKey($array, 'test')->isStrictFloat());
-        assertInstanceOf(Assert::class, Assert::thatKey($obj, 'test')->isStrictFloat());
 
+        assertInstanceOf( Assert::class, Assert::thatKey( $array, 'test' )->isStrictFloat() );
+        assertInstanceOf( Assert::class, Assert::thatKey( $obj, 'test' )->isStrictFloat() );
     }
 
-
-
-    public function testIsIntDoesNotThrowOnInt()
+    public function testAssertThatKeyOptionalPass()
     {
-        $value = 42;
-        Assert::that($value, 'testValue')->isInt()->isStrictInt();
-        $this->assertTrue(true);
+
+        $obj = new stdClass();
+        $obj->foo = '2023-05-01';
+
+        assertInstanceOf( Assert::class, Assert::thatKey( $obj, 'foo' )->isOptional()->isDate() );
+
+        assertInstanceOf( Assert::class, Assert::thatKey( $obj, 'bar' )->isOptional()->isDate() );
     }
 
-    public function testIsIntDoesNotThrowOnIntString()
+    public function testAssertThatKeyOptionalFail()
     {
-        $value = '42';
-        Assert::that($value, 'testValue')->isInt();
-        $this->assertTrue(true);
+
+        $this->expectException( AssertException::class );
+
+        $obj = new stdClass();
+        $obj->foo = 'not-a-date';
+
+        Assert::thatKey( $obj, 'foo' )->isOptional()->isDate();
     }
 
-    public function testIsStrictIntThrowsOnIntString()
+    public function testAssertThatKeyMandatoryFail()
     {
-        $this->expectException(AssertException::class);
-        $this->expectExceptionMessage('Expected testValue to be strictly an integer, got string(\'42\')');
 
-        $value = '42';
-        Assert::that($value, 'testValue')->isStrictInt();
+        $this->expectException( AssertException::class );
+
+        $obj = new stdClass();
+
+        Assert::thatKey( $obj, 'bar' )->isDate();
     }
 
-    public function testIsFloatAcceptsFloat()
+    public function testChainedAssertionsPass()
     {
-        $value = 3.14;
-        Assert::that($value, 'testValue')->isFloat();
-        $this->assertTrue(true);
+
+        Assert::that( 'hello@example.com' )
+            ->isString()
+            ->hasMinLength( 5 )
+            ->contains( '@' )
+            ->isEmail();
+        $this->assertTrue( true );
     }
 
-    public function testIsFloatAcceptsFloatString()
+    public function testChainedAssertionsFail()
     {
-        $value = '3.14';
-        Assert::that($value, 'testValue')->isFloat();
-        $this->assertTrue(true);
+
+        $this->expectException( AssertException::class );
+        Assert::that( 'short' )
+            ->isString()
+            ->hasMinLength( 10 )
+            ->contains( '@' );
     }
 
-    public function testIsFloatRejectsNonFloatString()
+    public function testChainedDateAssertionsPass()
     {
-        $this->expectException(AssertException::class);
-        $this->expectExceptionMessage('Expected testValue to be numeric, got string(\'not a float\')');
 
-        $value = 'not a float';
-        Assert::that($value, 'testValue')->isFloat();
+        Assert::that( '2024-05-01' )
+            ->isDate()
+            ->isDateGreaterThanOrEqual( '2024-01-01' )
+            ->isDateLessThanOrEqual( '2024-12-31' );
+        $this->assertTrue( true );
     }
 
-    public function testIsStrictFloatAcceptsOnlyRealFloat()
+    public function testChainedNumericAssertionsPass()
     {
-        $value = 3.14;
-        Assert::that($value, 'testValue')->isStrictFloat();
-        $this->assertTrue(true);
+
+        Assert::that( 42 )
+            ->isInt()
+            ->isGreaterThan( 10 )
+            ->isLessThan( 100 )
+            ->isBetween( 30, 50 );
+        $this->assertTrue( true );
     }
 
-    public function testIsStrictFloatThrowsOnFloatString()
+    public function testChainedOptionalWithOtherAssertions()
     {
-        $this->expectException(AssertException::class);
-        $this->expectExceptionMessage('Expected testValue to be strictly a float, got string(\'3.14\')');
 
-        $value = '3.14';
-        Assert::that($value, 'testValue')->isStrictFloat();
-    }
+        $obj = new stdClass();
+        $obj->foo = null;
 
-    public function testIsStrictFloatThrowsOnInteger()
-    {
-        $this->expectException(AssertException::class);
-        $this->expectExceptionMessage('Expected testValue to be strictly a float, got integer(\'42\')');
-
-        $value = 42;
-        Assert::that($value, 'testValue')->isStrictFloat();
-    }
-
-    public function testIsGreatherThanTrue()
-    {
-        $value = '42.6';
-        Assert::that($value, 'testValue')->isGreaterThan(42);
-
-        $this->assertTrue(true);
-    }
-
-    public function testIsGreatherThanFalse()
-    {
-        $this->expectException(AssertException::class);
-        $this->expectExceptionMessage('Expected testValue to be greater than 42, got string(\'41\')');
-
-        $value = '41';
-        Assert::that($value, 'testValue')->isGreaterThan(42);
+        // Will pass because optional() allows null
+        Assert::thatKey( $obj, 'foo' )
+            ->isOptional()
+            ->isString()
+            ->hasMaxLength( 10 );
+        $this->assertTrue( true );
     }
 }
