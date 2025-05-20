@@ -1,6 +1,6 @@
 {
   "name": "hegentopf/php-assert",
-  "description": "A simple assertion library for PHP",
+  "description": "A lightweight and fluent PHP assertion library for easy and expressive validations.",
   "type": "library",
   "license": "MIT",
   "authors": [
