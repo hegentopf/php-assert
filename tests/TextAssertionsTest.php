@@ -12,6 +12,8 @@ class TextAssertionsTest extends TestCase {
     {
 
         Assert::that( 'abc' )->isString();
+        Assert::that( '123' )->isString();
+        Assert::that( 123.3 )->isString();
         $this->assertTrue( true );
     }
 
@@ -19,7 +21,22 @@ class TextAssertionsTest extends TestCase {
     {
 
         $this->expectException( AssertException::class );
-        Assert::that( 123 )->isString();
+        Assert::that( array() )->isString();
+    }
+
+    public function testIsStrictStringPass()
+    {
+
+        Assert::that( 'abc' )->isStrictString();
+        Assert::that( '123' )->isStrictString();
+        $this->assertTrue( true );
+    }
+
+    public function testIsStrictStringFail()
+    {
+
+        $this->expectException( AssertException::class );
+        Assert::that( 123 )->isStrictString();
     }
 
     public function testHasLengthPass()
@@ -34,12 +51,15 @@ class TextAssertionsTest extends TestCase {
 
         $this->expectException( AssertException::class );
         Assert::that( 'abc' )->hasLength( 4 );
+        Assert::that( '123.4' )->hasLength( 5 );
+        Assert::that( 123.4 )->hasLength( 5 );
     }
 
     public function testHasMinLengthPass()
     {
 
         Assert::that( 'abc' )->hasMinLength( 2 );
+        Assert::that( 123 )->hasMinLength( 2 );
         $this->assertTrue( true );
     }
 

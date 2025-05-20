@@ -30,6 +30,7 @@ use BadMethodCallException;
  * @method Assert isSameAs( $comparison )
  * @method Assert isNotSameAs( $comparison )
  * @method Assert isString()
+ * @method Assert isStrictString()
  * @method Assert hasLength()
  * @method Assert hasMinLength( $minLength )
  * @method Assert hasMaxLength( $maxLength )

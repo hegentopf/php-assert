@@ -76,7 +76,7 @@ The following assertions are currently implemented and chainable:
 - `isNotEqualTo($comparison)`
 - `isSameAs($comparison)`
 - `isNotSameAs($comparison)`
-- `isString()`
+- `isString()`, `isStrictString()`
 - `hasLength()`
 - `hasMinLength($minLength)`
 - `hasMaxLength($maxLength)`
