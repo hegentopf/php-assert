@@ -46,6 +46,7 @@ use BadMethodCallException;
  * @method Assert isDateLessThan( $date )
  * @method Assert isDateLessThanOrEqual( $date )
  * @method Assert isDateBetween( $minDate, $maxDate, $inclusive = true )
+ * @throws AssertException
  */
 class Assert {
 
