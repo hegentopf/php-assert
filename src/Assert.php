@@ -46,6 +46,10 @@ use BadMethodCallException;
  * @method Assert isDateLessThan( $date )
  * @method Assert isDateLessThanOrEqual( $date )
  * @method Assert isDateBetween( $minDate, $maxDate, $inclusive = true )
+ * @method Assert hasArrayLengthAssertion( $length )
+ * @method Assert hasMinArrayLength( $minLength )
+ * @method Assert hasMaxArrayLength( $maxLength )
+ * @method Assert hasArrayLengthBetween( $minLength, $maxLength )
  * @throws AssertException
  */
 class Assert {
@@ -54,6 +58,8 @@ class Assert {
     protected $name;
     protected $optional = false;
     protected $results = array();
+    protected $each = false;
+    protected $eachRecursive = false;
 
     public function __construct( $value, $name )
     {
@@ -130,6 +136,27 @@ class Assert {
             throw new BadMethodCallException( "Method $name does not exist" );
         }
 
+        if ( $this->each && is_array( $this->value ) ) 
+        {
+            foreach ( $this->value as $idx => $item ) 
+            {
+                $assert = new self( $item, "{$this->name}[$idx]" );
+                $assert->optional = $this->optional;
+                if ( $this->eachRecursive && is_array( $item ) )
+                {
+                    $assert->each = true;
+                    $assert->eachRecursive = true;
+                    $assert->$name(...$arguments);
+                } else 
+                {
+                    $assert->each = false;
+                    $assert->eachRecursive = false;
+                    $assert->$name(...$arguments);
+                }
+            }
+            return $this;
+        }
+            
         $assertion = new $className( $this, ...$arguments );
         $assertion->assert();
 
@@ -194,6 +221,25 @@ class Assert {
 
         $this->optional = true;
 
+        return $this;
+    }
+
+    // Activate the each mode, which will assert each element of an array
+    public function each()
+    {
+
+        $this->each = true;
+        $this->eachRecursive = false;
+
+        return $this;
+    }
+
+    // Activate the eachRecursive mode, which will recursively assert each element of a nested array
+    public function eachRecursive()
+    {
+        $this->each = true;
+        $this->eachRecursive = true;
+        
         return $this;
     }
 

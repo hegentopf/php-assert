@@ -92,6 +92,44 @@ The following assertions are currently implemented and chainable:
 - `isDateLessThan($date)`
 - `isDateLessThanOrEqual($date)`
 - `isDateBetween($minDate, $maxDate, $inclusive = true)`
+- `hasArrayLengthAssertion( $length )`
+- `hasMinArrayLength( $minLength )`
+- `hasMaxArrayLength( $maxLength )`
+- `hasArrayLengthBetween( $minLength, $maxLength )`
+
+---
+
+## Array Loop Assertions with `each()` and `eachRecursive()`
+
+The `each()` method allows you to apply assertions to every element of an array (only the first level).  
+The `eachRecursive()` method applies assertions to every element of an array recursively, including all nested arrays.  
+This is especially useful when you want to ensure that all values in an array (or nested arrays) meet a specific type or condition.
+
+**Examples:**
+
+```php
+use Hegentopf\Assert\Assert;
+
+// Check if all values in the array are floats (first level only)
+Assert::that([3.14, 2.71])->isArray()->each()->isStrictFloat();
+
+// Works with associative arrays as well
+Assert::that(['a' => 1, 'b' => 2])->isArray()->each()->isInt();
+
+// Validate nested arrays: check that each element is an array (first level)
+Assert::that([[1, 2], [3, 4]])->isArray()->each()->isArray();
+
+// Recursively check that all values in nested arrays are integers
+Assert::that([[1, 2], [3, 4]])->isArray()->eachRecursive()->isInt();
+
+// Optional validation for each element (first level)
+Assert::that([null, 3.14, 2.71])->isArray()->each()->isOptional()->isStrictFloat();
+
+// Optional validation for all nested elements
+Assert::that([[null, 3.14], [2.71, null]])->isArray()->eachRecursive()->isOptional()->isStrictFloat();
+```
+
+With `each()` and `eachRecursive()`, you can chain any assertions and they will be applied to every element in the array (either only the first level or recursively). Optional checks (`isOptional()`) are correctly propagated to nested arrays.
 
 ---
 
