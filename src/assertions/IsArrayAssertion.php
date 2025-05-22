@@ -3,6 +3,8 @@
 namespace Hegentopf\Assert\assertions;
 
 class IsArrayAssertion extends AbstractAssertion {
+    public static $isArrayAssertion = true;
+    
     protected function check()
     {
 

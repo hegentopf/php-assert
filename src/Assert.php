@@ -136,19 +136,13 @@ class Assert {
             throw new BadMethodCallException( "Method $name does not exist" );
         }
 
-        if ( $this->each && is_array( $this->value ) ) 
-        {
-            foreach ( $this->value as $idx => $item ) 
-            {
-                $assert = new self( $item, "{$this->name}[$idx]" );
-                $assert->optional = $this->optional;
-                if ( $this->eachRecursive && is_array( $item ) )
-                {
-                    $assert->each = true;
-                    $assert->eachRecursive = true;
-                    $assert->$name(...$arguments);
-                } else 
-                {
+        if ($this->each && ($iterable = $this->getIterable($this->value))) {
+            if ($this->eachRecursive) {
+                $this->applyRecursiveAssertions($iterable, $name, $arguments, $this->name);
+            } else {
+                foreach ($iterable as $idx => $item) {
+                    $assert = new self($item, "{$this->name}[$idx]");
+                    $assert->optional = $this->optional;
                     $assert->each = false;
                     $assert->eachRecursive = false;
                     $assert->$name(...$arguments);
@@ -241,6 +235,46 @@ class Assert {
         $this->eachRecursive = true;
         
         return $this;
+    }
+
+    protected function applyRecursiveAssertions($value, $name, $arguments, $path)
+    {
+        $className = __NAMESPACE__ . '\\assertions\\' . ucfirst($name) . 'Assertion';
+        $isArrayAssertion = property_exists($className, 'isArrayAssertion') && $className::$isArrayAssertion;
+
+        $iterable = $this->getIterable($value);
+
+        if ($iterable !== null) {
+            if ($isArrayAssertion) {
+                $assert = new self($value, $path);
+                $assert->optional = $this->optional;
+                $assert->each = false;
+                $assert->eachRecursive = false;
+                $assert->$name(...$arguments);
+            }
+            foreach ($iterable as $idx => $item) {
+                $this->applyRecursiveAssertions($item, $name, $arguments, "{$path}[$idx]");
+            }
+        } else {
+            if (!$isArrayAssertion) {
+                $assert = new self($value, $path);
+                $assert->optional = $this->optional;
+                $assert->each = false;
+                $assert->eachRecursive = false;
+                $assert->$name(...$arguments);
+            }
+        }
+    }
+
+    protected function getIterable($value)
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (is_object($value)) {
+            return get_object_vars($value);
+        }
+        return null;
     }
 
 }

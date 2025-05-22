@@ -6,6 +6,7 @@ class HasArrayLengthBetweenAssertion extends AbstractAssertion
 {
     protected $minLength;
     protected $maxLength;
+    public static $isArrayAssertion = true;
 
     public function __construct( $assert, $minLength, $maxLength )
     {

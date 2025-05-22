@@ -5,6 +5,7 @@ namespace Hegentopf\Assert\assertions;
 class HasArrayLengthAssertion extends AbstractAssertion
 {
     protected $length;
+    public static $isArrayAssertion = true;
 
     public function __construct( $assert, $length )
     {
