@@ -99,11 +99,11 @@ The following assertions are currently implemented and chainable:
 
 ---
 
-## Array Loop Assertions with `each()` and `eachRecursive()`
+## Array and Object Loop Assertions with `each()` and `eachRecursive()`
 
-The `each()` method allows you to apply assertions to every element of an array (only the first level).  
-The `eachRecursive()` method applies assertions to every element of an array recursively, including all nested arrays.  
-This is especially useful when you want to ensure that all values in an array (or nested arrays) meet a specific type or condition.
+The `each()` method allows you to apply assertions to every element of an array or every public property of an object (only the first level).  
+The `eachRecursive()` method applies assertions to every element of an array or every property of an object recursively, including all nested arrays and objects.  
+This is especially useful when you want to ensure that all values in a (possibly nested) array or object structure meet a specific type or condition.
 
 **Examples:**
 
@@ -127,9 +127,22 @@ Assert::that([null, 3.14, 2.71])->isArray()->each()->isOptional()->isStrictFloat
 
 // Optional validation for all nested elements
 Assert::that([[null, 3.14], [2.71, null]])->isArray()->eachRecursive()->isOptional()->isStrictFloat();
+
+// Check all public properties of an object
+$obj = new stdClass();
+$obj->a = 1;
+$obj->b = 2;
+Assert::that($obj)->each()->isInt();
+
+// Recursively check all values in nested arrays and objects
+$obj1 = new stdClass();
+$obj1->value1 = [1];
+$obj1->value2 = 2;
+$obj1->value3 = [[2]];
+Assert::that([[$obj1]])->eachRecursive()->isInt();
 ```
 
-With `each()` and `eachRecursive()`, you can chain any assertions and they will be applied to every element in the array (either only the first level or recursively). Optional checks (`isOptional()`) are correctly propagated to nested arrays.
+With `each()` and `eachRecursive()`, you can chain any assertions and they will be applied to every element in the array or every property in the object (either only the first level or recursively). Optional checks (`isOptional()`) are correctly propagated to nested arrays and objects.
 
 ---
 

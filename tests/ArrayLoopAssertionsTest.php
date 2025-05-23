@@ -1,19 +1,18 @@
 <?php
-
 namespace Hegentopf\Assert\Tests;
 
+use function PHPUnit\Framework\assertInstanceOf;
 use Hegentopf\Assert\Assert;
 use Hegentopf\Assert\AssertException;
 use PHPUnit\Framework\TestCase;
 use stdClass;
-use function PHPUnit\Framework\assertInstanceOf;
 
 class ArrayLoopAssertionsTest extends TestCase
 {
     public function testEachWithObjects()
     {
-        $obj1 = new stdClass();
-        $obj2 = new stdClass();
+        $obj1  = new stdClass();
+        $obj2  = new stdClass();
         $array = [$obj1, $obj2];
         assertInstanceOf(Assert::class, Assert::that($array)->isArray()->each()->isObject());
     }
@@ -63,7 +62,7 @@ class ArrayLoopAssertionsTest extends TestCase
         $array = [
             [1, 2],
             [3, 4, 5],
-            [6, 7, 8, 9]
+            [6, 7, 8, 9],
         ];
         Assert::that($array)->isArray()->each()->hasArrayLengthBetween(2, 4);
         $this->expectException(AssertException::class);
@@ -75,7 +74,7 @@ class ArrayLoopAssertionsTest extends TestCase
         $this->expectException(AssertException::class);
         $array = [
             [1, 2],
-            [3, 'fail']
+            [3, 'fail'],
         ];
         Assert::that($array)->isArray()->eachRecursive()->isInt();
     }
@@ -84,14 +83,14 @@ class ArrayLoopAssertionsTest extends TestCase
     {
         $array = [
             [null, 3.14],
-            [2.71, null]
+            [2.71, null],
         ];
         assertInstanceOf(Assert::class, Assert::that($array)->isArray()->eachRecursive()->isOptional()->isStrictFloat());
     }
 
     public function testEachWithObject()
     {
-        $obj1 = new stdClass();
+        $obj1         = new stdClass();
         $obj1->value1 = 1;
         $obj1->value2 = 2;
         assertInstanceOf(Assert::class, Assert::that($obj1)->each()->isInt());
@@ -99,7 +98,7 @@ class ArrayLoopAssertionsTest extends TestCase
 
     public function testEachRecursiveWithObject()
     {
-        $obj1 = new stdClass();
+        $obj1         = new stdClass();
         $obj1->value1 = 1;
         $obj1->value2 = 2;
         assertInstanceOf(Assert::class, Assert::that([[$obj1]])->eachRecursive()->isInt());
@@ -107,7 +106,7 @@ class ArrayLoopAssertionsTest extends TestCase
 
     public function testEachRecursiveWithArrayInObject()
     {
-        $obj1 = new stdClass();
+        $obj1         = new stdClass();
         $obj1->value1 = [1];
         $obj1->value2 = 2;
         $obj1->value3 = [[2]];
