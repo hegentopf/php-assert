@@ -92,6 +92,57 @@ The following assertions are currently implemented and chainable:
 - `isDateLessThan($date)`
 - `isDateLessThanOrEqual($date)`
 - `isDateBetween($minDate, $maxDate, $inclusive = true)`
+- `hasArrayLengthAssertion( $length )`
+- `hasMinArrayLength( $minLength )`
+- `hasMaxArrayLength( $maxLength )`
+- `hasArrayLengthBetween( $minLength, $maxLength )`
+
+---
+
+## Array and Object Loop Assertions with `each()` and `eachRecursive()`
+
+The `each()` method allows you to apply assertions to every element of an array or every public property of an object (only the first level).  
+The `eachRecursive()` method applies assertions to every element of an array or every property of an object recursively, including all nested arrays and objects.  
+This is especially useful when you want to ensure that all values in a (possibly nested) array or object structure meet a specific type or condition.
+
+**Examples:**
+
+```php
+use Hegentopf\Assert\Assert;
+
+// Check if all values in the array are floats (first level only)
+Assert::that([3.14, 2.71])->isArray()->each()->isStrictFloat();
+
+// Works with associative arrays as well
+Assert::that(['a' => 1, 'b' => 2])->isArray()->each()->isInt();
+
+// Validate nested arrays: check that each element is an array (first level)
+Assert::that([[1, 2], [3, 4]])->isArray()->each()->isArray();
+
+// Recursively check that all values in nested arrays are integers
+Assert::that([[1, 2], [3, 4]])->isArray()->eachRecursive()->isInt();
+
+// Optional validation for each element (first level)
+Assert::that([null, 3.14, 2.71])->isArray()->each()->isOptional()->isStrictFloat();
+
+// Optional validation for all nested elements
+Assert::that([[null, 3.14], [2.71, null]])->isArray()->eachRecursive()->isOptional()->isStrictFloat();
+
+// Check all public properties of an object
+$obj = new stdClass();
+$obj->a = 1;
+$obj->b = 2;
+Assert::that($obj)->each()->isInt();
+
+// Recursively check all values in nested arrays and objects
+$obj1 = new stdClass();
+$obj1->value1 = [1];
+$obj1->value2 = 2;
+$obj1->value3 = [[2]];
+Assert::that([[$obj1]])->eachRecursive()->isInt();
+```
+
+With `each()` and `eachRecursive()`, you can chain any assertions and they will be applied to every element in the array or every property in the object (either only the first level or recursively). Optional checks (`isOptional()`) are correctly propagated to nested arrays and objects.
 
 ---
 

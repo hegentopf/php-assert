@@ -46,6 +46,10 @@ use BadMethodCallException;
  * @method Assert isDateLessThan( $date )
  * @method Assert isDateLessThanOrEqual( $date )
  * @method Assert isDateBetween( $minDate, $maxDate, $inclusive = true )
+ * @method Assert hasArrayLengthAssertion( $length )
+ * @method Assert hasMinArrayLength( $minLength )
+ * @method Assert hasMaxArrayLength( $maxLength )
+ * @method Assert hasArrayLengthBetween( $minLength, $maxLength )
  * @throws AssertException
  */
 class Assert {
@@ -54,6 +58,8 @@ class Assert {
     protected $name;
     protected $optional = false;
     protected $results = array();
+    protected $each = false;
+    protected $eachRecursive = false;
 
     public function __construct( $value, $name )
     {
@@ -130,6 +136,21 @@ class Assert {
             throw new BadMethodCallException( "Method $name does not exist" );
         }
 
+        if ( $this->each && ( $iterable = $this->getIterable( $this->value ) ) ) {
+            if ( $this->eachRecursive ) {
+                $this->applyRecursiveAssertions( $iterable, $name, $arguments, $this->name );
+            } else {
+                foreach ( $iterable as $idx => $item ) {
+                    $assert = new self( $item, "{$this->name}[$idx]" );
+                    $assert->optional = $this->optional;
+                    $assert->each = false;
+                    $assert->eachRecursive = false;
+                    $assert->$name( ...$arguments );
+                }
+            }
+            return $this;
+        }
+            
         $assertion = new $className( $this, ...$arguments );
         $assertion->assert();
 
@@ -197,4 +218,63 @@ class Assert {
         return $this;
     }
 
+    // Activate the each mode, which will assert each element of an array
+    public function each()
+    {
+
+        $this->each = true;
+        $this->eachRecursive = false;
+
+        return $this;
+    }
+
+    // Activate the eachRecursive mode, which will recursively assert each element of a nested array
+    public function eachRecursive()
+    {
+        $this->each = true;
+        $this->eachRecursive = true;
+        
+        return $this;
+    }
+
+    protected function applyRecursiveAssertions( $value, $name, $arguments, $path )
+    {
+        $className = __NAMESPACE__ . '\\assertions\\' . ucfirst( $name ) . 'Assertion';
+        $isArrayAssertion = property_exists( $className, 'isArrayAssertion' ) && $className::$isArrayAssertion;
+
+        $iterable = $this->getIterable( $value );
+
+        if ( $iterable !== null ) {
+            if ( $isArrayAssertion ) {
+                $assert = new self( $value, $path );
+                $assert->optional = $this->optional;
+                $assert->each = false;
+                $assert->eachRecursive = false;
+                $assert->$name( ...$arguments );
+            }
+            foreach ( $iterable as $idx => $item ) {
+                $this->applyRecursiveAssertions( $item, $name, $arguments, "{$path}[$idx]" );
+            }
+        } else {
+            if ( !$isArrayAssertion ) {
+                $assert = new self( $value, $path );
+                $assert->optional = $this->optional;
+                $assert->each = false;
+                $assert->eachRecursive = false;
+                $assert->$name( ...$arguments );
+            }
+        }
+    }
+
+    protected function getIterable( $value )
+    {
+
+        if ( is_array( $value ) ) {
+            return $value;
+        }
+        if ( is_object( $value ) ) {
+            return $this->getObjectVars( $value );
+        }
+        return null;
+    }
 }
