@@ -261,8 +261,13 @@ class Assert {
 
         $iterable = $this->getIterable( $value );
 
-        if ( $iterable === null && false === $isArrayAssertion )
+        if ( $iterable === null )
         {
+            if ( false !== $isArrayAssertion )
+            {
+                return;
+            }
+
             $assert = new self( $value, $path );
             $assert->optional = $this->optional;
             $assert->each = false;
