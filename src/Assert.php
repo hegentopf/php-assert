@@ -321,7 +321,7 @@ class Assert {
             return get_object_vars( $value );
         }
 
-        $vars = [];
+        $vars = array();
 
         $reflection = new ReflectionObject( $value );
         $properties = $reflection->getProperties();
