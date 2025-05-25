@@ -101,11 +101,17 @@ The following assertions are currently implemented and chainable:
 
 ## Array and Object Loop Assertions with `each()` and `eachRecursive()`
 
-The `each()` method allows you to apply assertions to every element of an array or every public property of an object (only the first level).  
+The `each()` method allows you to apply assertions to every element of an array or every property of an object (only the first level).  
 The `eachRecursive()` method applies assertions to every element of an array or every property of an object recursively, including all nested arrays and objects.  
 This is especially useful when you want to ensure that all values in a (possibly nested) array or object structure meet a specific type or condition.
 
-**Examples:**
+By default, **all properties** of an object are validated — including `private`, `protected`, and `public` ones.  
+If you want to restrict validation to **public properties only**, you can pass `false` to the optional `$testPrivateProperties` parameter.
+
+> **Note:**  
+> Protected properties are treated the same as private ones — they are included by default and excluded only if `$testPrivateProperties` is set to `false`.
+
+### Examples:
 
 ```php
 use Hegentopf\Assert\Assert;
@@ -128,13 +134,17 @@ Assert::that([null, 3.14, 2.71])->isArray()->each()->isOptional()->isStrictFloat
 // Optional validation for all nested elements
 Assert::that([[null, 3.14], [2.71, null]])->isArray()->eachRecursive()->isOptional()->isStrictFloat();
 
-// Check all public properties of an object
-$obj = new stdClass();
-$obj->a = 1;
-$obj->b = 2;
-Assert::that($obj)->each()->isInt();
+// Check all properties (public, protected, and private) of an object
+class Example {
+    private int $a = 1;
+    protected int $b = 2;
+    public int $c = 3;
+}
+$obj = new Example();
+Assert::that($obj)->each()->isInt(); // all properties are checked
+Assert::that($obj)->each(false)->isInt(); // only public properties ($c)
 
-// Recursively check all values in nested arrays and objects
+// Recursively check values in nested arrays and objects
 $obj1 = new stdClass();
 $obj1->value1 = [1];
 $obj1->value2 = 2;

@@ -2,7 +2,11 @@
 
 namespace Hegentopf\Assert;
 
+use ArrayAccess;
 use BadMethodCallException;
+use Exception;
+use ReflectionObject;
+use Traversable;
 
 /**
  * @method Assert isInt()
@@ -60,6 +64,7 @@ class Assert {
     protected $results = array();
     protected $each = false;
     protected $eachRecursive = false;
+    protected $eachPrivate = false;
 
     public function __construct( $value, $name )
     {
@@ -103,7 +108,7 @@ class Assert {
         elseif ( is_object( $container ) )
         {
             $keyExists = property_exists( $container, $key );
-            if ( !$keyExists && method_exists( $container, '__get' ) )
+            if ( false === $keyExists && method_exists( $container, '__get' ) )
             {
                 // __get might dynamically allow access, but we can't know if it "exists"
                 // So we assume keyExists = true, but still check value !== null
@@ -131,30 +136,38 @@ class Assert {
     {
 
         $className = __NAMESPACE__ . '\\assertions\\' . ucfirst( $name ) . 'Assertion';
-        if ( !class_exists( $className ) )
+        if ( false === class_exists( $className ) )
         {
             throw new BadMethodCallException( "Method $name does not exist" );
         }
 
-        if ( $this->each && ( $iterable = $this->getIterable( $this->value ) ) ) {
-            if ( $this->eachRecursive ) {
-                $this->applyRecursiveAssertions( $iterable, $name, $arguments, $this->name );
-            } else {
-                foreach ( $iterable as $idx => $item ) {
-                    $assert = new self( $item, "{$this->name}[$idx]" );
-                    $assert->optional = $this->optional;
-                    $assert->each = false;
-                    $assert->eachRecursive = false;
-                    $assert->$name( ...$arguments );
-                }
-            }
+        if ( !$this->each || !( $iterable = $this->getIterable( $this->value ) ) )
+        {
+            $assertion = new $className( $this, ...$arguments );
+            $assertion->assert();
+
             return $this;
         }
-            
-        $assertion = new $className( $this, ...$arguments );
-        $assertion->assert();
+
+        if ( $this->eachRecursive )
+        {
+            $this->applyRecursiveAssertions( $iterable, $name, $arguments, $this->name );
+
+            return $this;
+        }
+
+        foreach ( $iterable as $idx => $item )
+        {
+            $assert = new self( $item, "{$this->name}[$idx]" );
+            $assert->optional = $this->optional;
+            $assert->each = false;
+            $assert->eachRecursive = false;
+            $assert->$name( ...$arguments );
+        }
+
 
         return $this;
+
     }
 
     /**
@@ -219,62 +232,102 @@ class Assert {
     }
 
     // Activate the each mode, which will assert each element of an array
-    public function each()
+    public function each( $testPrivateProperties = true )
     {
 
         $this->each = true;
         $this->eachRecursive = false;
+        $this->eachPrivate = $testPrivateProperties;
 
         return $this;
     }
 
     // Activate the eachRecursive mode, which will recursively assert each element of a nested array
-    public function eachRecursive()
+    public function eachRecursive( $testPrivateProperties = false )
     {
+
         $this->each = true;
         $this->eachRecursive = true;
-        
+        $this->eachPrivate = $testPrivateProperties;
+
         return $this;
     }
 
     protected function applyRecursiveAssertions( $value, $name, $arguments, $path )
     {
+
         $className = __NAMESPACE__ . '\\assertions\\' . ucfirst( $name ) . 'Assertion';
         $isArrayAssertion = property_exists( $className, 'isArrayAssertion' ) && $className::$isArrayAssertion;
 
         $iterable = $this->getIterable( $value );
 
-        if ( $iterable !== null ) {
-            if ( $isArrayAssertion ) {
-                $assert = new self( $value, $path );
-                $assert->optional = $this->optional;
-                $assert->each = false;
-                $assert->eachRecursive = false;
-                $assert->$name( ...$arguments );
-            }
-            foreach ( $iterable as $idx => $item ) {
-                $this->applyRecursiveAssertions( $item, $name, $arguments, "{$path}[$idx]" );
-            }
-        } else {
-            if ( !$isArrayAssertion ) {
-                $assert = new self( $value, $path );
-                $assert->optional = $this->optional;
-                $assert->each = false;
-                $assert->eachRecursive = false;
-                $assert->$name( ...$arguments );
-            }
+        if ( $iterable === null && false === $isArrayAssertion )
+        {
+            $assert = new self( $value, $path );
+            $assert->optional = $this->optional;
+            $assert->each = false;
+            $assert->eachRecursive = false;
+            $assert->$name( ...$arguments );
+
+            return;
+        }
+
+        if ( $isArrayAssertion )
+        {
+            $assert = new self( $value, $path );
+            $assert->optional = $this->optional;
+            $assert->each = false;
+            $assert->eachRecursive = false;
+            $assert->$name( ...$arguments );
+        }
+
+        foreach ( $iterable as $idx => $item )
+        {
+            $this->applyRecursiveAssertions( $item, $name, $arguments, "{$path}[$idx]" );
         }
     }
 
-    protected function getIterable( $value )
+    private function getIterable( $value )
     {
 
-        if ( is_array( $value ) ) {
+        if ( is_array( $value ) )
+        {
             return $value;
         }
-        if ( is_object( $value ) ) {
-            return $this->getObjectVars( $value );
+
+        if ( false === is_object( $value ) )
+        {
+            return null;
         }
-        return null;
+
+        if ( $value instanceof ArrayAccess || $value instanceof Traversable )
+        {
+            try
+            {
+                return iterator_to_array( $value );
+            } catch ( Exception $e )
+            {
+                return null;
+            }
+        }
+
+        if ( false === $this->eachPrivate )
+        {
+            return get_object_vars( $value );
+        }
+
+        $vars = [];
+
+        $reflection = new ReflectionObject( $value );
+        $properties = $reflection->getProperties();
+
+        foreach ( $properties as $property )
+        {
+            $property->setAccessible( true );
+            $vars[ $property->getName() ] = $property->getValue( $value );
+        }
+
+        return $vars;
+
     }
 }
