@@ -28,10 +28,5 @@
   },
   "scripts": {
     "test": "phpunit tests --colors=always"
-  },
-  "config": {
-    "platform": {
-      "php": "5.6.0"
-    }
   }
 }
