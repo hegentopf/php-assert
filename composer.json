@@ -27,6 +27,6 @@
     }
   },
   "scripts": {
-    "test": "phpunit tests --colors=always"
+    "test": "phpunit"
   }
 }
